@@ -1,4 +1,4 @@
-ame: Compile Lime OS Bootable ISO
+name: Compile Lime OS Bootable ISO
 
 on:
   push:
