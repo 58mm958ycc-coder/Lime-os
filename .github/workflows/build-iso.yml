@@ -1,1 +1,44 @@
+name: Compile Lime OS Bootable ISO
 
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code Repository
+      uses: actions/checkout@v4
+
+    - name: Install Compilers and ISO Generation Utilities
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gcc-multilib g++-multilib binutils grub-common xorriso
+
+    - name: Compile Assemblies and Source Subsystems
+      run: |
+        gcc -m32 -c src/boot.s -o boot.o
+        gcc -m32 -c src/parser.c -o parser.o
+        g++ -m32 -c src/kernel.cpp -o kernel.o -fno-use-cxa-atexit -fno-rtti -fno-exceptions -nostdlib
+
+    - name: Link Core Subsystems into Kernel Executable
+      run: |
+        ld -m elf_i386 -T src/linker.ld -o limeos.bin boot.o parser.o kernel.o
+
+    - name: Build Target ISO File Distribution Directory Tree
+      run: |
+        mkdir -p iso/boot/grub
+        cp limeos.bin iso/boot/
+        cp grub.cfg iso/boot/grub/
+
+    - name: Generate Bootable ISO Graphic Image
+      run: |
+        grub-mkrescue -o limeos.iso iso
+
+    - name: Export Output ISO Artifact to GitHub Dashboard
+      uses: actions/upload-artifact@v4
+      with:
+        name: LimeOS-Bootable-ISO
+        path: limeos.iso
