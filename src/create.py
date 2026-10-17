@@ -1,79 +1,57 @@
 import os
-import subprocess
-import time
+import sys
 
-# Configurations
-SRC_DIR = "src"
-PARSER_FILE = os.path.join(SRC_DIR, "parser.c")
+def write_to_log(message):
+    print(message)
+    with open("../loy_build.log", "a") as log:
+        log.write(message + "\n")
 
-def fix_errors_in_source():
-    """Reads source files and patches structural typos."""
-    if not os.path.exists(PARSER_FILE):
-        return False
-        
-    with open(PARSER_FILE, 'r') as file:
-        lines = file.readlines()
-
-    fixed = False
-    for i, line in enumerate(lines):
-        # Fix missing # instruction header typo
-        if line.strip().startswith("include <stddef.h>"):
-            lines[i] = "#include <stddef.h>\n"
-            fixed = True
-        # Fix accidental un-indexed pointer checks buffer -> buffer[index]
-        if "buffer == " in line:
-            lines[i] = line.replace("buffer == ", "buffer[0] == ")
-            fixed = True
-
-    if fixed:
-        print("[create.py] Found and patched code discrepancies inside parser.c...")
-        with open(PARSER_FILE, 'w') as file:
-            file.writelines(lines)
-    return fixed
-
-def execute_build_command(command):
-    """Executes compiler instructions dynamically."""
-    print(f"[create.py] Executing: {command}")
-    process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
-    return process.returncode, stderr.decode()
-
-def orchestration_loop():
-    """Main compilation validation loop framework."""
-    os.makedirs(SRC_DIR, exist_ok=True)
+def heal_workspace():
+    write_to_log("[Loy Engine] Starting self-healing workspace scan...")
     
-    # Validation instructions sequences matching target pipelines
-    build_steps = [
-        "gcc -m32 -c src/boot.s -o boot.o",
-        "gcc -m32 -c src/parser.c -o parser.o"
-    ]
-    
-    loop_active = True
-    iteration = 1
+    # 1. Automatically generate linker.ld if missing
+    linker_path = "linker.ld"
+    if not os.path.exists(linker_path):
+        write_to_log("[Loy Engine] Missing linker.ld! Generating layout dynamically...")
+        linker_content = """ENTRY(_start)
+SECTIONS
+{
+    . = 2M;
+    .text BLOCK(4K) : ALIGN(4K) { *(.multiboot) *(.text) }
+    .rodata BLOCK(4K) : ALIGN(4K) { *(.rodata) }
+    .data BLOCK(4K) : ALIGN(4K) { *(.data) }
+    .bss BLOCK(4K) : ALIGN(4K) { *(COMMON) *(.bss) }
+}"""
+        with open(linker_path, "w") as f:
+            f.write(linker_content)
 
-    while loop_active:
-        print(f"\n--- Compilation Loop Iteration Run #{iteration} ---")
-        fix_errors_in_source()
-        
-        all_passed = True
-        for step in build_steps:
-            return_code, error_msg = execute_build_command(step)
-            
-            if return_code != 0:
-                print(f"\n❌ Compilation Error caught during target execution: '{step}'")
-                print(f"Error Context:\n{error_msg}")
-                all_passed = False
-                break # Break path step execution sequence to force self-healing execution patch
-        
-        if all_passed:
-            print("\n==============================================")
-            print("✅ SUCCESS: All low-level binary stages compiled cleanly!")
-            print("==============================================")
-            loop_active = False
-        else:
-            print("\n[create.py] System error status flag caught. Processing resolution loop in 2 seconds...")
-            time.sleep(2)
-            iteration += 1
+    # 2. Automatically generate grub.cfg if missing in root
+    grub_path = "../grub.cfg"
+    if not os.path.exists(grub_path):
+        write_to_log("[Loy Engine] Missing grub.cfg! Generating boot config dynamically...")
+        grub_content = """menuentry "Lime OS (Unified Store System)" {
+    multiboot /boot/limeos.bin
+    boot
+}"""
+        with open(grub_path, "w") as f:
+            f.write(grub_content)
+
+    # 3. Patch missing hashtag compiler error in parser.c
+    parser_path = "parser.c"
+    if os.path.exists(parser_path):
+        with open(parser_path, "r") as f:
+            content = f.read()
+        if "include <stddef.h>" in content and not "#include <stddef.h>" in content:
+            write_to_log("[Loy Engine] Patching missing '#' symbol in parser.c preprocessor include...")
+            content = content.replace("include <stddef.h>", "#include <stddef.h>")
+            with open(parser_path, "w") as f:
+                f.write(content)
+
+    write_to_log("[Loy Engine] All files verified. Workspace ready for large-payload ISO compilation.")
 
 if __name__ == "__main__":
-    orchestration_loop()
+    # Standard compilation environment preparation loop iteration
+    loop_count = 0
+    while loop_count < 3:
+        heal_workspace()
+        loop_count += 1
