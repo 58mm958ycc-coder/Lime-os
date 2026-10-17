@@ -41,7 +41,7 @@ def process_image_assets():
 def heal_workspace():
     write_to_log("[Loy Engine] Starting workspace diagnostic sweep...")
     
-    # Generate linker.ld if dropped from src/
+    # 1. Generate linker.ld if dropped from src/
     if not os.path.exists("linker.ld"):
         with open("linker.ld", "w") as f:
             f.write("""ENTRY(_start)
@@ -54,10 +54,18 @@ SECTIONS
     .bss BLOCK(4K) : ALIGN(4K) { *(COMMON) *(.bss) }
 }""")
 
-    # Generate grub.cfg if dropped from root
+    # 2. FIXED: Automatically generates the graphics-enabled grub.cfg if missing
     if not os.path.exists("../grub.cfg"):
         with open("../grub.cfg", "w") as f:
-            f.write("""menuentry "Lime OS (Unified Store System)" {
+            f.write("""insmod vbe
+insmod vga
+insmod video_bochs
+insmod video_cirrus
+
+set gfxmode=1024x768x32
+set gfxpayload=keep
+
+menuentry "Lime OS (Unified Store System)" {
     multiboot /boot/limeos.bin
     boot
 }""")
