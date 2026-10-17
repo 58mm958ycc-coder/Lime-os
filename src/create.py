@@ -7,12 +7,12 @@ def write_to_log(message):
         log.write(message + "\n")
 
 def heal_workspace():
-    write_to_log("[Loy Engine] Starting self-healing workspace scan...")
+    write_to_log("[Loy Engine] Running unified ecosystem directory build...")
     
-    # 1. Automatically generate linker.ld if missing
+    # Generate linker.ld if missing
     linker_path = "linker.ld"
     if not os.path.exists(linker_path):
-        write_to_log("[Loy Engine] Missing linker.ld! Generating layout dynamically...")
+        write_to_log("[Loy Engine] Creating linker.ld script...")
         linker_content = """ENTRY(_start)
 SECTIONS
 {
@@ -25,10 +25,10 @@ SECTIONS
         with open(linker_path, "w") as f:
             f.write(linker_content)
 
-    # 2. Automatically generate grub.cfg if missing in root
+    # Generate grub.cfg if missing
     grub_path = "../grub.cfg"
     if not os.path.exists(grub_path):
-        write_to_log("[Loy Engine] Missing grub.cfg! Generating boot config dynamically...")
+        write_to_log("[Loy Engine] Creating grub.cfg configuration...")
         grub_content = """menuentry "Lime OS (Unified Store System)" {
     multiboot /boot/limeos.bin
     boot
@@ -36,22 +36,18 @@ SECTIONS
         with open(grub_path, "w") as f:
             f.write(grub_content)
 
-    # 3. Patch missing hashtag compiler error in parser.c
-    parser_path = "parser.c"
-    if os.path.exists(parser_path):
-        with open(parser_path, "r") as f:
-            content = f.read()
-        if "include <stddef.h>" in content and not "#include <stddef.h>" in content:
-            write_to_log("[Loy Engine] Patching missing '#' symbol in parser.c preprocessor include...")
-            content = content.replace("include <stddef.h>", "#include <stddef.h>")
-            with open(parser_path, "w") as f:
-                f.write(content)
+    # Create distinct filesystem directories for real app emulation containers
+    paths = [
+        "../iso/limestore/google_play_subsystem/apks",
+        "../iso/limestore/apple_store_subsystem/ipas",
+        "../iso/limestore/microsoft_store_subsystem/exes",
+        "../iso/limestore/chrome_browser_core/libs"
+    ]
+    for p in paths:
+        os.makedirs(p, exist_ok=True)
 
-    write_to_log("[Loy Engine] All files verified. Workspace ready for large-payload ISO compilation.")
+    write_to_log("[Loy Engine] Subsystem infrastructure paths initialized.")
 
 if __name__ == "__main__":
-    # Standard compilation environment preparation loop iteration
-    loop_count = 0
-    while loop_count < 3:
+    for i in range(3):
         heal_workspace()
-        loop_count += 1
