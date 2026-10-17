@@ -1,4 +1,4 @@
-include <stddef.h>
+#include <stddef.h>
 
 // Identify Executable Subsystem Types
 typedef enum {
@@ -23,7 +23,6 @@ binary_type_t detect_binary_format(const unsigned char* buffer, size_t size) {
     }
 
     // Apple Mach-O Binary (IPA container contains Mach-O executable)
-    // Magic: 0xFEEDFACE (32-bit) or 0xFEEDFACF (64-bit)
     if ((buffer[0] == 0xFE && buffer[1] == 0xED && buffer[2] == 0xFA && buffer[3] == 0xCE) ||
         (buffer[0] == 0xFE && buffer[1] == 0xED && buffer[2] == 0xFA && buffer[3] == 0xCF)) {
         return FORMAT_IPA_MACHO;
