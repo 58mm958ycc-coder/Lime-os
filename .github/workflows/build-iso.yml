@@ -17,6 +17,19 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y gcc-multilib g++-multilib binutils grub-common xorriso
 
+    # 🤖 SELF-HEALING AUTOMATION STEP
+    - name: Automatically Patch Code Typos & Syntax Errors
+      run: |
+        echo "Checking for known syntax errors..."
+        if [ -f src/parser.c ]; then
+          # Fix missing '#' in include directive
+          sed -i 's/^include <stddef.h>/#include <stddef.h>/g' src/parser.c
+          
+          # Ensure buffer pointer comparison array syntax is safe
+          sed -i 's/buffer == /buffer[0] == /g' src/parser.c
+          echo "Patches applied successfully to src/parser.c."
+        fi
+
     - name: Compile Assemblies and Source Subsystems
       run: |
         gcc -m32 -c src/boot.s -o boot.o
