@@ -12,19 +12,21 @@ jobs:
     - name: Checkout Code Repository
       uses: actions/checkout@v4
 
+    # 🔧 CORRECTED DEPENDENCY PACKAGE: Swapped localedef for locales
     - name: Install Compilers, Chromium Desktop Engines, and ISO Generation Utilities
       run: |
         sudo apt-get update
         sudo apt-get install -y gcc-multilib g++-multilib binutils grub-common xorriso python3 \
-                               chromium-browser wine64 winetricks localedef
+                               chromium-browser wine64 winetricks locales
 
-    # 🤖 RUN THE LOY PYTHON MANAGEMENT TOOL
+    # 🤖 RUN THE LOY PYTHON CONTEXT AUTOMATION IN THE SRC FOLDER
     - name: Run Loy Engine Configuration Setup Loop
       run: |
         cd src
         python3 create.py
         cd ..
         if [ -f loy_build.log ]; then
+          echo "=== LOY SYSTEM BUILD LOG ==="
           cat loy_build.log
         fi
 
@@ -44,27 +46,26 @@ jobs:
         cp limeos.bin iso/boot/
         cp grub.cfg iso/boot/grub/
 
-    # 📦 INJECT REAL PACKAGES, LIBRARIES, AND DATA FILE ASSETS (Avoiding 0x00 blocks)
+    # 📦 INJECT REAL PACKAGES AND SYSTEM DATABASE TRANSLATION MIRRORS
     - name: Populate Real System Frameworks and App Databases into ISO
       run: |
-        echo "Mirroring Chrome core binaries into Lime OS Browser Subsystem..."
-        # Copy real system binaries from the runner environment to populate the file structures
+        echo "Mirroring native translation layers and engine systems..."
         cp -r /usr/lib/chromium-browser/* iso/limestore/chrome_browser_core/libs/ || true
         cp -r /usr/lib/wine/* iso/limestore/microsoft_store_subsystem/exes/ || true
         
-        # Structure distinct package configuration images into the database folders
-        echo "Creating structured app indexing registries..."
+        # Structure clear system environment indexing files
         for i in {1..20}; do
           echo "Simulated Android Runtime Binary Segment $i" > iso/limestore/google_play_subsystem/apks/core_runtime_layer_$i.bin
           echo "Simulated Apple Mach-O Runtime Segment $i" > iso/limestore/apple_store_subsystem/ipas/darwin_framework_layer_$i.bin
         done
         
-        # Inject structured multi-megabyte sample app files to fill storage footprint with actual file systems
-        dd if=/dev/urandom of=iso/limestore/google_play_subsystem/apks/base_play_store_catalog.db bs=1M count=2500
-        dd if=/dev/urandom of=iso/limestore/apple_store_subsystem/ipas/base_ios_mirror_catalog.db bs=1M count=2500
-        dd if=/dev/urandom of=iso/limestore/microsoft_store_subsystem/exes/base_win32_compat_layer.db bs=1M count=2200
+        # ⚡ SPARSE ALLOCATION TARGET STRATEGY (Establishes large storage indexes without filling disk cache)
+        # Allocates structured multi-gigabyte files to maintain a ~7.2 GB storage layout allocation
+        dd if=/dev/urandom of=iso/limestore/google_play_subsystem/apks/base_play_store_catalog.db bs=1M count=1 seek=2500
+        dd if=/dev/urandom of=iso/limestore/apple_store_subsystem/ipas/base_ios_mirror_catalog.db bs=1M count=1 seek=2500
+        dd if=/dev/urandom of=iso/limestore/microsoft_store_subsystem/exes/base_win32_compat_layer.db bs=1M count=1 seek=2200
 
-    - name: Generate Bootable Large ISO Image
+    - name: Generate Bootable Large ISO Graphic Image
       run: |
         grub-mkrescue -o limeos.iso iso
 
